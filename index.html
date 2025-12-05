@@ -87,13 +87,10 @@
               
                 <div align="center">
 
-  <h1> Python MCP Template </h1>
+  <h1> MCP Markdown Template </h1>
 
 </div>
 
-<blockquote>
-<p>A DevOps-friendly template for building MCP servers from markdown templates</p>
-</blockquote>
 <h2 id="core-idea">🚀 Core Idea</h2>
 <p>Transform markdown templates (like GitHub Issue templates) into MCP tools automatically. Write a template once, get both a FastAPI endpoint and an MCP tool.</p>
 <h2 id="architecture">🏗️ Architecture</h2>
@@ -104,11 +101,13 @@
 ├── generator.py   # Create FastAPI endpoints dynamically
 └── server.py      # FastMCP server with CORS
 </code></pre>
-<p><strong>How it works:</strong>
-1. <strong>Load</strong> - Fetch templates from local files, directories, or URLs
-2. <strong>Parse</strong> - Extract <code>&lt;variables&gt;</code> and metadata from YAML frontmatter
-3. <strong>Generate</strong> - Create typed FastAPI endpoints with Pydantic models
-4. <strong>Serve</strong> - Expose as both REST API (<code>/api/docs</code>) and MCP tools (<code>/mcp</code>)</p>
+<p><strong>How it works:</strong> </p>
+<ol>
+<li><strong>Load</strong> - Fetch templates from local files, directories, or URLs  </li>
+<li><strong>Parse</strong> - Extract <code>&lt;variables&gt;</code> and metadata from YAML frontmatter  </li>
+<li><strong>Generate</strong> - Create typed FastAPI endpoints with Pydantic models  </li>
+<li><strong>Serve</strong> - Expose as both REST API (<code>/api/docs</code>) and MCP tools (<code>/mcp</code>)  </li>
+</ol>
 <h2 id="features">🌟 Features</h2>
 <ul>
 <li><strong>Auto-generate MCP tools</strong> from markdown templates</li>
@@ -119,57 +118,45 @@
 </ul>
 <h2 id="getting-started">🛠️ Getting Started</h2>
 <h3 id="local-development">Local Development</h3>
-<ol>
-<li>
-<p>Install dependencies:
-  <code>bash
-  uv sync</code></p>
-</li>
-<li>
-<p>Run the MCP server:
-  <code>bash
-  uv run uvicorn mcp_tools.main:starlette_app --host 127.0.0.1 --port 8000</code></p>
-</li>
-</ol>
+<p>Install dependencies:</p>
+<pre><code class="language-bash">uv sync
+</code></pre>
+<p>Run the MCP server:</p>
+<pre><code class="language-bash">uv run uvicorn mcp_tools.main:starlette_app --host 127.0.0.1 --port 8000
+</code></pre>
 <h3 id="docker">Docker</h3>
-<ol>
-<li>
-<p>Build the Docker image:
-   <code>bash
-   docker build -t mcp-markdown-template:latest .</code></p>
-</li>
-<li>
+<p>Build the Docker image:</p>
+<pre><code class="language-bash">docker build -t docker.io/username/mcp-markdown-template:latest .
+</code></pre>
 <p>Run the container with various template sources:</p>
-</li>
-</ol>
-<p><code>bash
-   # Mount local templates directory
-   docker run -i --rm -p 8000:8000 \
-     -v /path/to/your/templates:/app/templates \
-     -e MCP_TEMPLATES_SOURCE=/app/templates \
-     mcp-markdown-template:latest</code></p>
-<p><code>bash
-   # Load from URL (GitHub raw URL)
-   docker run -i --rm -p 8000:8000 \
-     -e MCP_TEMPLATES_SOURCE=https://raw.githubusercontent.com/hsiangjenli/mcp-yaml-to-markdown/refs/heads/main/.github/ISSUE_TEMPLATE/demo.md \
-     mcp-markdown-template:latest</code></p>
-<p><code>bash
-   # Multiple sources (comma-separated)
-   docker run -i --rm -p 8000:8000 \
-     -e MCP_TEMPLATES_SOURCE="/app/templates,https://raw.githubusercontent.com/owner/repo/main/template.md" \
-     -v /path/to/local/templates:/app/templates \
-     mcp-markdown-template:latest</code></p>
-<ol>
-<li>MCP Server configuration (for Claude Desktop, etc.):
-  <code>json
-  {
-    "mcpServers": {
-      "mcp-markdown-template": {
-        "url": "http://localhost:8000/mcp"
-      }
-    }
-  }</code></li>
-</ol>
+<pre><code class="language-bash"># Mount local templates directory
+docker run -i --rm -p 8000:8000 \
+  -v /path/to/your/templates:/app/templates \
+  -e MCP_TEMPLATES_SOURCE=/app/templates \
+  docker.io/hsiangjenli/mcp-markdown-template:latest
+</code></pre>
+<pre><code class="language-bash"># Load from URL (GitHub raw URL)
+docker run -i --rm -p 8000:8000 \
+  -e MCP_TEMPLATES_SOURCE=https://raw.githubusercontent.com/hsiangjenli/mcp-markdown-template/refs/heads/main/.github/ISSUE_TEMPLATE/demo.md \
+  docker.io/hsiangjenli/mcp-markdown-template:latest
+</code></pre>
+<pre><code class="language-bash"># Multiple sources (comma-separated)
+docker run -i --rm -p 8000:8000 \
+  -e MCP_TEMPLATES_SOURCE=&quot;/app/templates,https://raw.githubusercontent.com/owner/repo/main/template.md&quot; \
+  -v /path/to/local/templates:/app/templates \
+  docker.io/hsiangjenli/mcp-markdown-template:latest
+</code></pre>
+<p>MCP Server configuration (for Claude Desktop, etc.):</p>
+<pre><code class="language-json">{
+    &quot;servers&quot;: {
+        &quot;markdown-template&quot;: {
+            &quot;url&quot;: &quot;http://localhost:8000/mcp&quot;,
+            &quot;type&quot;: &quot;http&quot;
+        }
+    },
+    &quot;inputs&quot;: []
+}
+</code></pre>
 <h3 id="template-sources">Template Sources</h3>
 <table>
 <thead>
@@ -222,7 +209,7 @@
 </table>
 <h2 id="documentation">📚 Documentation</h2>
 <p>Build docs locally:</p>
-<pre><code class="language-bash">scripts/build_docs.sh &amp;&amp; mkdocs build
+<pre><code class="language-bash">scripts/build_docs.sh &amp;&amp; uv run mkdocs build
 </code></pre>
               
             </div>
@@ -272,5 +259,5 @@
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-12-05 07:02:16.416070+00:00
+Build Date UTC : 2025-12-05 07:22:43.617608+00:00
 -->
