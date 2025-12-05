@@ -2,12 +2,13 @@
 Dynamically generate MCP tools from markdown templates.
 """
 
+import re
 from pathlib import Path
-from typing import Any
 from pydantic import Field, create_model
 from fastapi import FastAPI
 
 from .template_parser import parse_template, render_template
+from .template_loader import TemplateSource, load_templates
 
 
 def create_tool_from_template(
@@ -17,12 +18,7 @@ def create_tool_from_template(
     remove_comments: bool = True,
 ):
     """
-    Create a FastAPI endpoint from a markdown template.
-
-    The endpoint will:
-    - Parse the template to extract variables
-    - Create a Pydantic model for input validation
-    - Register the endpoint with FastAPI (which will be converted to MCP tool)
+    Create a FastAPI endpoint from a markdown template file.
 
     Parameters
     ----------
@@ -42,15 +38,67 @@ def create_tool_from_template(
     template_path = Path(template_path)
     parsed = parse_template(template_path)
 
+    return _create_tool_internal(
+        app=app,
+        parsed=parsed,
+        template_content=parsed.raw_content,
+        source_identifier=str(template_path),
+        tool_name=tool_name,
+        remove_comments=remove_comments,
+    )
+
+
+def create_tool_from_source(
+    app: FastAPI,
+    source: TemplateSource,
+    tool_name: str | None = None,
+    remove_comments: bool = True,
+):
+    """
+    Create a FastAPI endpoint from a TemplateSource.
+
+    Parameters
+    ----------
+    app : FastAPI
+        The FastAPI app to register the endpoint with
+    source : TemplateSource
+        The loaded template source
+    tool_name : str | None
+        Custom tool name (defaults to template name)
+    remove_comments : bool
+        Whether to remove HTML comments from rendered output
+
+    Returns
+    -------
+    The registered endpoint function
+    """
+    parsed = parse_template(source.name, content=source.content)
+
+    return _create_tool_internal(
+        app=app,
+        parsed=parsed,
+        template_content=source.content,
+        source_identifier=source.source_path,
+        tool_name=tool_name,
+        remove_comments=remove_comments,
+    )
+
+
+def _create_tool_internal(
+    app: FastAPI,
+    parsed,
+    template_content: str,
+    source_identifier: str,
+    tool_name: str | None = None,
+    remove_comments: bool = True,
+):
+    """Internal function to create a tool from parsed template."""
+
     # Generate tool name from template name if not provided
     if tool_name is None:
-        # Convert "🐞 Bug" to "bug_report" style
-        name = parsed.name or template_path.stem
-        # Remove emojis and special characters
-        import re
-
+        name = parsed.name or "template"
         name = re.sub(r"[^\w\s]", "", name).strip().lower().replace(" ", "_")
-        tool_name = f"create_{name}" if name else f"create_{template_path.stem}"
+        tool_name = f"create_{name}" if name else "create_template"
 
     # Build parameter info for the dynamic function
     param_info = []
@@ -69,8 +117,8 @@ def create_tool_from_template(
         f"{tool_name.title().replace('_', '')}Input", **field_definitions
     )
 
-    # Store template_path in closure
-    _template_path = str(template_path)
+    # Store in closure
+    _template_content = template_content
     _remove_comments = remove_comments
     _description = parsed.about or f"Create content from {parsed.name} template"
 
@@ -78,7 +126,10 @@ def create_tool_from_template(
     async def endpoint_func(input_data: InputModel) -> str:
         """Render the template with provided values."""
         return render_template(
-            _template_path, input_data.model_dump(), remove_comments=_remove_comments
+            template_source=source_identifier,
+            variables=input_data.model_dump(),
+            remove_comments=_remove_comments,
+            content=_template_content,
         )
 
     # Update function metadata
@@ -104,7 +155,7 @@ def register_templates_from_directory(
     remove_comments: bool = True,
 ):
     """
-    Register all templates from a directory as FastAPI endpoints.
+    Register all templates from a local directory as FastAPI endpoints.
 
     Parameters
     ----------
@@ -134,5 +185,55 @@ def register_templates_from_directory(
             print(f"Registered endpoint from: {template_path}")
         except Exception as e:
             print(f"Failed to register {template_path}: {e}")
+
+    return tools
+
+
+def register_templates_from_source(
+    app: FastAPI,
+    source: str,
+    pattern: str = "*.md",
+    remove_comments: bool = True,
+):
+    """
+    Register templates from various sources as FastAPI endpoints.
+
+    Supported formats:
+    - Local directory: /path/to/templates/
+    - Local file: /path/to/template.md
+    - URL: https://example.com/template.md
+    - GitHub raw URL: https://raw.githubusercontent.com/owner/repo/branch/path/template.md
+    - GitHub repo: owner/repo (loads all templates from .github/ISSUE_TEMPLATE/)
+    - GitHub repo with path: owner/repo:.github/ISSUE_TEMPLATE/bug.md
+
+    Parameters
+    ----------
+    app : FastAPI
+        The FastAPI app
+    source : str
+        The source path, URL, or GitHub repo identifier
+    pattern : str
+        Glob pattern for local directory (default: "*.md")
+    remove_comments : bool
+        Whether to remove HTML comments
+
+    Returns
+    -------
+    list
+        List of registered endpoint functions
+    """
+    tools = []
+
+    for template_source in load_templates(source, pattern):
+        try:
+            tool = create_tool_from_source(
+                app, template_source, remove_comments=remove_comments
+            )
+            tools.append(tool)
+            print(
+                f"Registered endpoint from: {template_source.source_type} - {template_source.source_path}"
+            )
+        except Exception as e:
+            print(f"Failed to register {template_source.name}: {e}")
 
     return tools

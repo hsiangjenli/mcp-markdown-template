@@ -28,7 +28,9 @@ class ParsedTemplate(BaseModel):
         return [v.name for v in self.variables]
 
 
-def parse_template(template_path: Path | str) -> ParsedTemplate:
+def parse_template(
+    template_source: Path | str, content: str | None = None
+) -> ParsedTemplate:
     """
     Parse a markdown template and extract:
     - YAML frontmatter (name, about, etc.)
@@ -37,16 +39,21 @@ def parse_template(template_path: Path | str) -> ParsedTemplate:
 
     Parameters
     ----------
-    template_path : Path | str
-        Path to the markdown template file
+    template_source : Path | str
+        Path to the markdown template file, or a name identifier if content is provided
+    content : str | None
+        Raw markdown content. If None, will read from template_source path.
 
     Returns
     -------
     ParsedTemplate
         Parsed template with variables and metadata
     """
-    template_path = Path(template_path)
-    raw = template_path.read_text(encoding="utf-8")
+    if content is None:
+        template_path = Path(template_source)
+        raw = template_path.read_text(encoding="utf-8")
+    else:
+        raw = content
 
     result = ParsedTemplate(raw_content=raw)
 
@@ -124,27 +131,35 @@ def parse_template(template_path: Path | str) -> ParsedTemplate:
 
 
 def render_template(
-    template_path: Path | str, variables: dict[str, str], remove_comments: bool = True
+    template_source: Path | str,
+    variables: dict[str, str],
+    remove_comments: bool = True,
+    content: str | None = None,
 ) -> str:
     """
     Render a template with the given variables.
 
     Parameters
     ----------
-    template_path : Path | str
-        Path to the markdown template file
+    template_source : Path | str
+        Path to the markdown template file, or a name identifier if content is provided
     variables : dict[str, str]
         Variables to render
     remove_comments : bool
         Whether to remove HTML comments from output
+    content : str | None
+        Raw markdown content. If None, will read from template_source path.
 
     Returns
     -------
     str
         Rendered template
     """
-    template_path = Path(template_path)
-    raw = template_path.read_text(encoding="utf-8")
+    if content is None:
+        template_path = Path(template_source)
+        raw = template_path.read_text(encoding="utf-8")
+    else:
+        raw = content
 
     # Escape HTML comments to prevent Jinja2 from parsing them
     comments = []
