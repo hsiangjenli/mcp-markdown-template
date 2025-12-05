@@ -4,7 +4,6 @@ about: A demo markdown template
 title: '[Demo] <title>'
 labels: demo, markdown, template
 assignees: ''
-
 ---
 
 <!--
