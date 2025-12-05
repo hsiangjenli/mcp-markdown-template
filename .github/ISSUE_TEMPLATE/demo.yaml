@@ -4,9 +4,9 @@ labels: ["a list", "of", "labels"] # Labels to apply to the issue
 assignees: [] # List of GitHub usernames to assign the issue to
 title: "[Demo] - Issue Title"
 body:
-  - type: markdown
+  - type: textarea
     id: section-id
     attributes:
       label: Section Title
-      description: Description of the issue template section
-      value: "Description of the issue template section and provide examples"
+      description: Description of this section
+      placeholder: Provide Example Text Here
