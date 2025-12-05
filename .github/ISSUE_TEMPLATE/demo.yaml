@@ -9,4 +9,4 @@ body:
     attributes:
       label: Section Title
       description: Description of the issue template section
-      placeholder: "An example placeholder text / example content"
+      value: "Description of the issue template section and provide examples"
