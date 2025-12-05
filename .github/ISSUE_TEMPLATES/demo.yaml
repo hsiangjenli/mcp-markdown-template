@@ -1,0 +1,10 @@
+name: Name of the issue template
+description: Description of the issue template
+labels: ["a list", "of", "labels"] # Labels to apply to the issue
+assignees: [] # List of GitHub usernames to assign the issue to
+title: "[Demo] - Issue Title"
+body:
+  - type: markdown
+    title: Section Title
+    description: Description of the issue template section
+    placeholder: An example placeholder text / example content
